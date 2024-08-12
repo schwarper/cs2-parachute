@@ -9,21 +9,28 @@ namespace Parachute;
 
 public class Config : BasePluginConfig
 {
-    [JsonPropertyName("css_parachute_fallspeed")] public float Fallspeed { get; set; } = 100;
+    [JsonPropertyName("css_parachute_fallspeed")] public float Fallspeed { get; set; } = 85;
     [JsonPropertyName("css_parachute_linear")] public bool Linear { get; set; } = true;
     [JsonPropertyName("css_parachute_model")] public string Model { get; set; } = "models/props_survival/parachute/chute.vmdl";
-    [JsonPropertyName("css_parachute_decrease")] public float Decrease { get; set; } = 50;
+    [JsonPropertyName("css_parachute_decrease")] public float Decrease { get; set; } = 15;
     [JsonPropertyName("css_admin_flag")] public string AdminFlag { get; set; } = string.Empty;
+    [JsonPropertyName("css_disable_when_carrying_hostage")] public bool DisableWhenCarryingHostage { get; set; } = false;
 }
 
 public class Parachute : BasePlugin, IPluginConfig<Config>
 {
     public override string ModuleName => "Parachute";
-    public override string ModuleVersion => "0.0.1";
+    public override string ModuleVersion => "0.0.2";
     public override string ModuleAuthor => "schwarper";
 
+    public class Player
+    {
+        public CDynamicProp? Model;
+        public bool Flying;
+    }
+
     public Config Config { get; set; } = new Config();
-    public readonly Dictionary<CCSPlayerController, CDynamicProp?> PlayerDataList = [];
+    public readonly Dictionary<CCSPlayerController, Player> PlayerDataList = [];
 
     public override void Load(bool hotReload)
     {
@@ -37,6 +44,16 @@ public class Parachute : BasePlugin, IPluginConfig<Config>
         }
 
         RegisterListener<OnTick>(OnTick);
+
+        if (hotReload)
+        {
+            var players = Utilities.GetPlayers().Where(player => !player.IsBot);
+
+            foreach (var player in players)
+            {
+                PlayerDataList.TryAdd(player, new Player());
+            }
+        }
     }
     public override void Unload(bool hotReload)
     {
@@ -56,19 +73,19 @@ public class Parachute : BasePlugin, IPluginConfig<Config>
     {
         CCSPlayerController? player = @event.Userid;
 
-        if (player == null)
+        if (player?.IsBot ?? true)
         {
             return HookResult.Continue;
         }
 
-        PlayerDataList.TryAdd(player, null);
+        PlayerDataList.TryAdd(player, new Player());
         return HookResult.Continue;
     }
     private HookResult OnPlayerDisconnect(EventPlayerDisconnect @event, GameEventInfo info)
     {
         CCSPlayerController? player = @event.Userid;
 
-        if (player == null)
+        if (player?.IsBot ?? true)
         {
             return HookResult.Continue;
         }
@@ -80,7 +97,7 @@ public class Parachute : BasePlugin, IPluginConfig<Config>
     {
         CCSPlayerController? player = @event.Userid;
 
-        if (player == null)
+        if (player?.IsBot ?? true)
         {
             return HookResult.Continue;
         }
@@ -96,7 +113,7 @@ public class Parachute : BasePlugin, IPluginConfig<Config>
     {
         bool parachuteModelEnable = !string.IsNullOrEmpty(Config.Model);
 
-        foreach (KeyValuePair<CCSPlayerController, CDynamicProp?> kvp in PlayerDataList)
+        foreach (KeyValuePair<CCSPlayerController, Player> kvp in PlayerDataList)
         {
             CCSPlayerController player = kvp.Key;
             CCSPlayerPawn? playerPawn = player.PlayerPawn.Value;
@@ -110,20 +127,21 @@ public class Parachute : BasePlugin, IPluginConfig<Config>
                 continue;
             }
 
-            CDynamicProp? entity = kvp.Value;
+            Player playerData = kvp.Value;
 
-            if (player.Buttons.HasFlag(PlayerButtons.Use) && !playerPawn.GroundEntity.IsValid)
+            if (player.Buttons.HasFlag(PlayerButtons.Use) && !playerPawn.GroundEntity.IsValid && (!Config.DisableWhenCarryingHostage || playerPawn.HostageServices?.CarriedHostageProp.Value == null))
             {
                 Vector velocity = playerPawn.AbsVelocity;
 
                 if (velocity.Z >= 0.0)
                 {
+                    playerPawn.GravityScale = 1.0f;
                     continue;
                 }
 
-                if (parachuteModelEnable && entity == null)
+                if (parachuteModelEnable && playerData.Model == null)
                 {
-                    PlayerDataList[player] = CreateParachute(playerPawn);
+                    playerData.Model = CreateParachute(playerPawn);
                 }
 
                 bool isFallSpeed = false;
@@ -142,17 +160,18 @@ public class Parachute : BasePlugin, IPluginConfig<Config>
                     velocity.Z += Config.Decrease;
                 }
 
-                playerPawn.GravityScale = 0.01f;
-            }
-            else
-            {
-                entity?.Remove();
-                PlayerDataList[player] = null;
-
-                if (playerPawn.GravityScale == 0.01f)
+                if (!playerData.Flying)
                 {
-                    playerPawn.GravityScale = 1.0f;
+                    playerPawn.GravityScale = 0.1f;
+                    playerData.Flying = true;
                 }
+            }
+            else if (playerData.Flying)
+            {
+                playerData.Model?.Remove();
+                playerData.Model = null;
+                playerData.Flying = false;
+                playerPawn.GravityScale = 1.0f;
             }
         }
     }
@@ -176,15 +195,16 @@ public class Parachute : BasePlugin, IPluginConfig<Config>
 
     private void RemoveParachute(CCSPlayerController player, bool removePlayer)
     {
-        if (PlayerDataList.TryGetValue(player, out CDynamicProp? entity) && entity != null)
+        if (PlayerDataList.TryGetValue(player, out var playerData) && playerData.Model != null)
         {
-            entity.Remove();
-            PlayerDataList[player] = null;
+            playerData.Model?.Remove();
+            playerData.Model = null;
+            playerData.Flying = false;
+        }
 
-            if (removePlayer)
-            {
-                PlayerDataList.Remove(player);
-            }
+        if (removePlayer)
+        {
+            PlayerDataList.Remove(player);
         }
     }
 }
