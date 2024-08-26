@@ -20,7 +20,7 @@ public class Config : BasePluginConfig
 public class Parachute : BasePlugin, IPluginConfig<Config>
 {
     public override string ModuleName => "Parachute";
-    public override string ModuleVersion => "0.0.2";
+    public override string ModuleVersion => "0.0.3";
     public override string ModuleAuthor => "schwarper";
 
     public class Player
