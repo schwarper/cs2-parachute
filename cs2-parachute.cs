@@ -168,7 +168,11 @@ public class Parachute : BasePlugin, IPluginConfig<Config>
             }
             else if (playerData.Flying)
             {
-                playerData.Model?.Remove();
+                if (playerData.Model?.IsValid == true)
+                {
+                    playerData.Model.Remove();
+                }
+
                 playerData.Model = null;
                 playerData.Flying = false;
                 playerPawn.GravityScale = 1.0f;
@@ -195,9 +199,13 @@ public class Parachute : BasePlugin, IPluginConfig<Config>
 
     private void RemoveParachute(CCSPlayerController player, bool removePlayer)
     {
-        if (PlayerDataList.TryGetValue(player, out var playerData) && playerData.Model != null)
+        if (PlayerDataList.TryGetValue(player, out var playerData))
         {
-            playerData.Model?.Remove();
+            if (playerData.Model?.IsValid == true)
+            {
+                playerData.Model.Remove();
+            }
+
             playerData.Model = null;
             playerData.Flying = false;
         }
