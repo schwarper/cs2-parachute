@@ -1,12 +1,13 @@
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Core.Attributes.Registration;
 using CounterStrikeSharp.API.Modules.Utils;
+using static Parachute.Config_Config;
 
 namespace Parachute;
 
 public partial class Parachute : BasePlugin
 {
-    public void OnServerPrecacheResources(ResourceManifest manifest)
+    public static void OnServerPrecacheResources(ResourceManifest manifest)
     {
         manifest.AddResource(Config.Model);
     }

@@ -4,10 +4,11 @@ using CounterStrikeSharp.API.Modules.Admin;
 using CounterStrikeSharp.API.Modules.Cvars;
 using CounterStrikeSharp.API.Modules.Utils;
 using static CounterStrikeSharp.API.Core.Listeners;
+using static Parachute.Config_Config;
 
 namespace Parachute;
 
-public partial class Parachute : BasePlugin, IPluginConfig<Config>
+public partial class Parachute : BasePlugin
 {
     public override string ModuleName => "Parachute";
     public override string ModuleVersion => "0.0.3";
@@ -19,12 +20,12 @@ public partial class Parachute : BasePlugin, IPluginConfig<Config>
         public bool Flying;
     }
 
-    public Config Config { get; set; } = new Config();
     public readonly Dictionary<CCSPlayerController, Player> PlayerDataList = [];
     public FakeConVar<bool> sv_parachute = new("sv_parachute", "Enable/Disable Parachute", true);
 
     public override void Load(bool hotReload)
     {
+        Config_Config.Load();
         OnFakeConVarChanged();
         RegisterFakeConVars(sv_parachute);
         RegisterListener<OnTick>(OnTick);
@@ -53,11 +54,6 @@ public partial class Parachute : BasePlugin, IPluginConfig<Config>
         }
 
         RemoveListener<OnTick>(OnTick);
-    }
-    public void OnConfigParsed(Config config)
-    {
-        config.Fallspeed *= -1.0f;
-        Config = config;
     }
 
     private void OnTick()
