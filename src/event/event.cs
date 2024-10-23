@@ -22,9 +22,7 @@ public partial class Parachute : BasePlugin
                 {
                     if (playerData.Flying)
                     {
-                        CCSPlayerPawn? playerPawn = player.PlayerPawn.Value;
-
-                        if (playerPawn != null)
+                        if (player.PlayerPawn.Value is CCSPlayerPawn playerPawn)
                         {
                             playerPawn.GravityScale = 1.0f;
                         }
@@ -39,9 +37,7 @@ public partial class Parachute : BasePlugin
     [GameEventHandler]
     public HookResult OnPlayerConnect(EventPlayerConnectFull @event, GameEventInfo info)
     {
-        CCSPlayerController? player = @event.Userid;
-
-        if (player?.IsBot ?? true)
+        if (@event.Userid is not CCSPlayerController player || player.IsBot)
         {
             return HookResult.Continue;
         }
@@ -53,9 +49,7 @@ public partial class Parachute : BasePlugin
     [GameEventHandler]
     public HookResult OnPlayerDisconnect(EventPlayerDisconnect @event, GameEventInfo info)
     {
-        CCSPlayerController? player = @event.Userid;
-
-        if (player?.IsBot ?? true)
+        if (@event.Userid is not CCSPlayerController player || player.IsBot)
         {
             return HookResult.Continue;
         }
@@ -67,9 +61,7 @@ public partial class Parachute : BasePlugin
     [GameEventHandler]
     public HookResult OnPlayerDeath(EventPlayerDeath @event, GameEventInfo info)
     {
-        CCSPlayerController? player = @event.Userid;
-
-        if (player?.IsBot ?? true)
+        if (@event.Userid is not CCSPlayerController player || player.IsBot)
         {
             return HookResult.Continue;
         }

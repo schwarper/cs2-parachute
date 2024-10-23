@@ -11,7 +11,7 @@ namespace Parachute;
 public partial class Parachute : BasePlugin
 {
     public override string ModuleName => "Parachute";
-    public override string ModuleVersion => "0.0.4";
+    public override string ModuleVersion => "0.0.5";
     public override string ModuleAuthor => "schwarper";
 
     public class Player
@@ -37,15 +37,20 @@ public partial class Parachute : BasePlugin
 
         if (hotReload)
         {
-            List<CCSPlayerController> players = Utilities.GetPlayers().Where(player => !player.IsBot).ToList();
+            var players = Utilities.GetPlayers();
 
-            foreach (CCSPlayerController? player in players)
+            foreach (var player in players)
             {
+                if (player.IsBot)
+                {
+                    continue;
+                }
+
                 PlayerDataList.TryAdd(player, new Player());
             }
-
         }
     }
+
     public override void Unload(bool hotReload)
     {
         if (!string.IsNullOrEmpty(Config.Model))
@@ -68,12 +73,14 @@ public partial class Parachute : BasePlugin
 
         foreach ((CCSPlayerController player, Player playerData) in PlayerDataList)
         {
-            CCSPlayerPawn? playerPawn = player.PlayerPawn.Value;
+            if (!player.IsValid || player.PlayerPawn.Value is not CCSPlayerPawn playerPawn)
+            {
+                continue;
+            }
 
             if (
                 !player.PawnIsAlive ||
-                (adminFlagEnable && !AdminManager.PlayerHasPermissions(player, Config.AdminFlag)) ||
-                playerPawn == null
+                (adminFlagEnable && !AdminManager.PlayerHasPermissions(player, Config.AdminFlag))
             )
             {
                 continue;
@@ -119,7 +126,7 @@ public partial class Parachute : BasePlugin
         }
     }
 
-    private CDynamicProp? CreateParachute(CCSPlayerPawn playerPawn)
+    private static CDynamicProp? CreateParachute(CCSPlayerPawn playerPawn)
     {
         CDynamicProp? entity = Utilities.CreateEntityByName<CDynamicProp>("prop_dynamic_override");
 

@@ -11,14 +11,18 @@ public static class Config_Config
 
     public static void Load()
     {
-        string assemblyName = Assembly.GetExecutingAssembly().GetName().Name ?? "";
-        string cfgPath = $"{Server.GameDirectory}/csgo/addons/counterstrikesharp/configs/plugins/{assemblyName}";
+        string assemblyName = Assembly.GetExecutingAssembly().GetName().Name ?? string.Empty;
 
-        LoadConfig($"{cfgPath}/config.toml");
-    }
+        string configPath = Path.Combine(Server.GameDirectory,
+            "csgo",
+            "addons",
+            "counterstrikesharp",
+            "configs",
+            "plugins",
+            assemblyName,
+            "config.toml"
+        );
 
-    private static void LoadConfig(string configPath)
-    {
         if (!File.Exists(configPath))
         {
             throw new FileNotFoundException($"Configuration file not found: {configPath}");
@@ -34,13 +38,6 @@ public static class Config_Config
         Config.Decrease = float.Parse(settingsTable["Decrease"].ToString()!);
         Config.AdminFlag = settingsTable["AdminFlag"].ToString()!;
         Config.DisableWhenCarryingHostage = bool.Parse(settingsTable["DisableWhenCarryingHostage"].ToString()!);
-
-        Server.PrintToConsole($"FallSpeed set to: {Config.Fallspeed}");
-        Server.PrintToConsole($"Linear set to: {Config.Linear}");
-        Server.PrintToConsole($"Model set to: {Config.Model}");
-        Server.PrintToConsole($"Decrease set to: {Config.Decrease}");
-        Server.PrintToConsole($"AdminFlag set to: {Config.AdminFlag}");
-        Server.PrintToConsole($"DisableWhenCarryingHostage set to: {Config.DisableWhenCarryingHostage}");
     }
 
     public class Cfg

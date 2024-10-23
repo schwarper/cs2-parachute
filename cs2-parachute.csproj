@@ -4,11 +4,20 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+	<OutputPath>BuildOutput\plugins\cs2-parachute\</OutputPath>
+	<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="CounterStrikeSharp.API" Version="1.0.255" />
     <PackageReference Include="Tomlyn" Version="0.17.0" />
   </ItemGroup>
+
+  <Target Name="CopyConfigFiles" AfterTargets="Build">
+		<ItemGroup>
+			<FilesToCopy Include="config.toml" />
+		</ItemGroup>
+		<Copy SourceFiles="@(FilesToCopy)" DestinationFolder="BuildOutput\configs\plugins\cs2-parachute\" />
+  </Target>
 
 </Project>

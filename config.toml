@@ -1,0 +1,7 @@
+[Settings]
+FallSpeed = 85
+Linear = true
+Model = "models/props_survival/parachute/chute.vmdl"
+Decrease = 15
+AdminFlag = ""
+DisableWhenCarryingHostage = false
