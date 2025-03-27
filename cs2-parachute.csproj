@@ -14,7 +14,7 @@
 
   <Target Name="CopyConfigFiles" AfterTargets="Build">
 		<ItemGroup>
-			<FilesToCopy Include="config.toml" />
+			<FilesToCopy Include="cs2-parachute.toml" />
 		</ItemGroup>
 		<Copy SourceFiles="@(FilesToCopy)" DestinationFolder="BuildOutput\configs\plugins\cs2-parachute\" />
   </Target>

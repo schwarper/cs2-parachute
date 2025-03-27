@@ -2,22 +2,14 @@
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Core.Attributes.Registration;
 using CounterStrikeSharp.API.Modules.Admin;
-using CounterStrikeSharp.API.Modules.Cvars;
 using CounterStrikeSharp.API.Modules.Utils;
-using System.Collections.Generic;
-using System.Text.Json.Serialization;
 using static Parachute.Parachute;
 
 namespace Parachute;
 
 public class Config : BasePluginConfig
 {
-    [JsonPropertyName("Fallspeed")] public float Fallspeed { get; set; } = 85;
-    [JsonPropertyName("Linear")] public bool Linear { get; set; } = true;
-    [JsonPropertyName("Model")] public string Model { get; set; } = "models/props_survival/parachute/chute.vmdl";
-    [JsonPropertyName("Decrease")] public float Decrease { get; set; } = 15;
-    [JsonPropertyName("AdminFlag")] public string AdminFlag { get; set; } = string.Empty;
-    [JsonPropertyName("DisableWhenCarryingHostage")] public bool DisableWhenCarryingHostage { get; set; } = false;
+    public Settings Settings { get; set; } = new();
 }
 
 public class Parachute : BasePlugin, IPluginConfig<Config>
@@ -32,12 +24,22 @@ public class Parachute : BasePlugin, IPluginConfig<Config>
         public bool Flying;
     }
 
+    public class Settings
+    {
+        public float FallSpeed { get; set; } = 85;
+        public bool Linear { get; set; } = true;
+        public string Model { get; set; } = "models/props_survival/parachute/chute.vmdl";
+        public float Decrease { get; set; } = 15;
+        public string AdminFlag { get; set; } = string.Empty;
+        public bool DisableWhenCarryingHostage { get; set; } = false;
+    }
+
     private readonly Dictionary<IntPtr, PlayerData> _playerDatas = [];
     public Config Config { get; set; } = new();
 
     public void OnConfigParsed(Config config)
     {
-        config.Fallspeed *= -1.0f;
+        config.Settings.FallSpeed *= -1.0f;
         Config = config;
     }
 
@@ -45,8 +47,8 @@ public class Parachute : BasePlugin, IPluginConfig<Config>
     {
         if (hotReload)
         {
-            var players = Utilities.GetPlayers();
-            foreach (var player in players)
+            List<CCSPlayerController> players = Utilities.GetPlayers();
+            foreach (CCSPlayerController player in players)
                 _playerDatas[player.Handle] = new();
         }
     }
@@ -97,27 +99,27 @@ public class Parachute : BasePlugin, IPluginConfig<Config>
     [ListenerHandler<Listeners.OnServerPrecacheResources>()]
     public void OnServerPrecacheResources(ResourceManifest manifest)
     {
-        if (!string.IsNullOrEmpty(Config.Model))
-            manifest.AddResource(Config.Model);
+        if (!string.IsNullOrEmpty(Config.Settings.Model))
+            manifest.AddResource(Config.Settings.Model);
     }
 
     [ListenerHandler<Listeners.OnTick>()]
     public void OnTick()
     {
-        bool hasParachuteModel = !string.IsNullOrEmpty(Config.Model);
-        bool requiresAdminFlag = !string.IsNullOrEmpty(Config.AdminFlag);
+        bool hasParachuteModel = !string.IsNullOrEmpty(Config.Settings.Model);
+        bool requiresAdminFlag = !string.IsNullOrEmpty(Config.Settings.AdminFlag);
 
         foreach ((IntPtr handle, PlayerData playerData) in _playerDatas)
         {
             if (new CCSPlayerController(handle) is not { } player ||
                 player.PlayerPawn.Value is not { } playerPawn ||
                 playerPawn.LifeState != (int)LifeState_t.LIFE_ALIVE ||
-                (requiresAdminFlag && !AdminManager.PlayerHasPermissions(player, Config.AdminFlag)))
+                (requiresAdminFlag && !AdminManager.PlayerHasPermissions(player, Config.Settings.AdminFlag)))
             {
                 continue;
             }
 
-            if (player.Buttons.HasFlag(PlayerButtons.Use) && !playerPawn.GroundEntity.IsValid && (!Config.DisableWhenCarryingHostage || playerPawn.HostageServices?.CarriedHostageProp.Value == null))
+            if (player.Buttons.HasFlag(PlayerButtons.Use) && !playerPawn.GroundEntity.IsValid && (!Config.Settings.DisableWhenCarryingHostage || playerPawn.HostageServices?.CarriedHostageProp.Value == null))
             {
                 Vector velocity = playerPawn.AbsVelocity;
 
@@ -132,9 +134,9 @@ public class Parachute : BasePlugin, IPluginConfig<Config>
                     playerData.Entity = CreateParachute(playerPawn);
                 }
 
-                velocity.Z = (velocity.Z >= Config.Fallspeed && Config.Linear) || Config.Decrease == 0.0f
-                    ? Config.Fallspeed
-                    : velocity.Z + Config.Decrease;
+                velocity.Z = (velocity.Z >= Config.Settings.FallSpeed && Config.Settings.Linear) || Config.Settings.Decrease == 0.0f
+                    ? Config.Settings.FallSpeed
+                    : velocity.Z + Config.Settings.Decrease;
 
                 if (!playerData.Flying)
                 {
@@ -154,20 +156,20 @@ public class Parachute : BasePlugin, IPluginConfig<Config>
 
     private CDynamicProp? CreateParachute(CCSPlayerPawn playerPawn)
     {
-        var entity = Utilities.CreateEntityByName<CDynamicProp>("prop_dynamic_override");
+        CDynamicProp? entity = Utilities.CreateEntityByName<CDynamicProp>("prop_dynamic_override");
         if (entity?.IsValid is not true)
             return null;
 
         entity.Teleport(playerPawn.AbsOrigin);
         entity.DispatchSpawn();
-        entity.SetModel(Config.Model);
+        entity.SetModel(Config.Settings.Model);
         entity.AcceptInput("SetParent", playerPawn, playerPawn, "!activator");
         return entity;
     }
 
     private void RemoveParachute(CCSPlayerController player)
     {
-        if (_playerDatas.TryGetValue(player.Handle, out var playerData) && playerData.Entity?.IsValid is true)
+        if (_playerDatas.TryGetValue(player.Handle, out PlayerData? playerData) && playerData.Entity?.IsValid is true)
             playerData.Entity.Remove();
     }
 }
