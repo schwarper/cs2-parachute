@@ -1,4 +1,4 @@
-name: Build & Publish cs2-store
+name: Build & Publish cs2-parachute
 
 on:
   push:
