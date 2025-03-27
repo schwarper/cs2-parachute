@@ -115,9 +115,7 @@ public class Parachute : BasePlugin, IPluginConfig<Config>
                 player.PlayerPawn.Value is not { } playerPawn ||
                 playerPawn.LifeState != (int)LifeState_t.LIFE_ALIVE ||
                 (requiresAdminFlag && !AdminManager.PlayerHasPermissions(player, Config.Settings.AdminFlag)))
-            {
-                continue;
-            }
+                    continue;
 
             if (player.Buttons.HasFlag(PlayerButtons.Use) && !playerPawn.GroundEntity.IsValid && (!Config.Settings.DisableWhenCarryingHostage || playerPawn.HostageServices?.CarriedHostageProp.Value == null))
             {
