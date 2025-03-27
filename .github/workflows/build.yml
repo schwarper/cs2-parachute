@@ -48,13 +48,13 @@ jobs:
 
       - name: Build
         run: |
-          dotnet build cs2-parachute.csproj -c Release --no-restore /p:Version=2.${{ env.BUILD_NUMBER }}
+          dotnet build cs2-parachute.csproj -c Release --no-restore /p:Version=1.${{ env.BUILD_NUMBER }}
 
       - name: Create Release Artifact (ZIP) from BuildOutput
         run: |
           mkdir -p release
           cd BuildOutput
-          zip -r ../cs2-parachute-v2.${{ env.BUILD_NUMBER }}.zip .
+          zip -r ../cs2-parachute-v1.${{ env.BUILD_NUMBER }}.zip .
 
       - name: Create GitHub Release
         id: create_release
@@ -62,12 +62,12 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: v2.${{ env.BUILD_NUMBER }}
-          release_name: v2.${{ env.BUILD_NUMBER }}
+          tag_name: v1.${{ env.BUILD_NUMBER }}
+          release_name: v1.${{ env.BUILD_NUMBER }}
           draft: false
           prerelease: false
           body: |
-            ## Release Notes for v2.${{ env.BUILD_NUMBER }}
+            ## Release Notes for v1.${{ env.BUILD_NUMBER }}
 
             ### Changes:
             - ${{ github.event.head_commit.message }}
@@ -81,6 +81,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./cs2-parachute-v2.${{ env.BUILD_NUMBER }}.zip
-          asset_name: cs2-parachute-v2.${{ env.BUILD_NUMBER }}.zip
+          asset_path: ./cs2-parachute-v1.${{ env.BUILD_NUMBER }}.zip
+          asset_name: cs2-parachute-v1.${{ env.BUILD_NUMBER }}.zip
           asset_content_type: application/zip
