@@ -15,7 +15,7 @@ public class Config : BasePluginConfig
 public class Parachute : BasePlugin, IPluginConfig<Config>
 {
     public override string ModuleName => "Parachute";
-    public override string ModuleVersion => "1.0";
+    public override string ModuleVersion => "1.1";
     public override string ModuleAuthor => "schwarper";
 
     public class PlayerData
