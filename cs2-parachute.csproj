@@ -9,13 +9,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="CounterStrikeSharp.API" Version="1.0.255" />
-    <PackageReference Include="Tomlyn" Version="0.17.0" />
+    <PackageReference Include="CounterStrikeSharp.API" Version="1.0.314" />
   </ItemGroup>
 
   <Target Name="CopyConfigFiles" AfterTargets="Build">
 		<ItemGroup>
-			<FilesToCopy Include="config.toml" />
+			<FilesToCopy Include="cs2-parachute.toml" />
 		</ItemGroup>
 		<Copy SourceFiles="@(FilesToCopy)" DestinationFolder="BuildOutput\configs\plugins\cs2-parachute\" />
   </Target>
