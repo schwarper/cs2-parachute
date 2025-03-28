@@ -16,7 +16,7 @@ public class Config : BasePluginConfig
 public class Parachute : BasePlugin, IPluginConfig<Config>
 {
     public override string ModuleName => "Parachute";
-    public override string ModuleVersion => "1.2";
+    public override string ModuleVersion => "1.3";
     public override string ModuleAuthor => "schwarper";
 
     public class PlayerData
@@ -54,7 +54,9 @@ public class Parachute : BasePlugin, IPluginConfig<Config>
         {
             List<CCSPlayerController> players = Utilities.GetPlayers();
             foreach (CCSPlayerController player in players)
+            {
                 _playerDatas[player.Handle] = new();
+            }
         }
     }
 
@@ -67,21 +69,18 @@ public class Parachute : BasePlugin, IPluginConfig<Config>
 
             foreach ((IntPtr handle, PlayerData playerData) in _playerDatas)
             {
-                if (new CCSPlayerController(handle) is not { } player)
+                if (!playerData.Flying || new CCSPlayerController(handle) is not { } player)
                     continue;
 
-                if (playerData.Flying)
-                {
-                    RemoveParachute(player);
-                    playerData.Entity = null;
-                    playerData.Flying = false;
-                    player.PlayerPawn.Value!.GravityScale = 1.0f;
-                }
+                RemoveParachute(player);
+                playerData.Entity = null;
+                playerData.Flying = false;
+                player.PlayerPawn.Value!.GravityScale = 1.0f;
             }
         };
     }
 
-    [GameEventHandler]
+    [GameEventHandler(HookMode.Pre)]
     public HookResult OnPlayerConnect(EventPlayerConnectFull @event, GameEventInfo info)
     {
         if (@event.Userid is not CCSPlayerController player)
@@ -91,7 +90,7 @@ public class Parachute : BasePlugin, IPluginConfig<Config>
         return HookResult.Continue;
     }
 
-    [GameEventHandler]
+    [GameEventHandler(HookMode.Pre)]
     public HookResult OnPlayerDisconnect(EventPlayerDisconnect @event, GameEventInfo info)
     {
         if (@event.Userid is not CCSPlayerController player)
@@ -140,9 +139,10 @@ public class Parachute : BasePlugin, IPluginConfig<Config>
         bool hasParachuteModel = !string.IsNullOrEmpty(Config.Settings.Model);
         bool requiresAdminFlag = !string.IsNullOrEmpty(Config.Settings.AdminFlag);
 
-        foreach ((IntPtr handle, PlayerData playerData) in _playerDatas)
+        List<CCSPlayerController> players = Utilities.GetPlayers();
+        foreach (CCSPlayerController player in players)
         {
-            if (new CCSPlayerController(handle) is not { } player ||
+            if (!_playerDatas.TryGetValue(player.Handle, out PlayerData? playerData) ||
                 player.PlayerPawn.Value is not { } playerPawn ||
                 playerPawn.LifeState != (int)LifeState_t.LIFE_ALIVE ||
                 (requiresAdminFlag && !AdminManager.PlayerHasPermissions(player, Config.Settings.AdminFlag)))
