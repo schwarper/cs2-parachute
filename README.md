@@ -1,5 +1,7 @@
 # cs2-parachute
 
+A parachute plugin that enables players to utilise a parachute while in the air.
+
 If you want to donate or need a help about plugin, you can contact me in discord private/server
 
 Discord nickname: schwarper
